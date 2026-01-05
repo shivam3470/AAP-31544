@@ -1,0 +1,38 @@
+---
+
+- name: Testing playbook for create token
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Create a new token using username/password
+      ansible.platform.token:
+        description: Temp token
+        scope: write
+        state: present
+        aap_username: "{{ api_username }}"
+        aap_password: "{{ api_password }}"
+        aap_hostname: "{{ tower_host | default('http://127.0.0.1') }}"
+        validate_certs: false
+
+    - name: Call Automation Controller API
+      when: ansible_facts['aap_token'] is defined and
+            ansible_facts['aap_token']['token'] is defined
+      block:
+        - name: List running jobs
+          register: testing_jobs
+          ignore_errors: true
+          environment:
+            CONTROLLER_OAUTH_TOKEN: "{{ ansible_facts['aap_token']['token'] }}"
+          ansible.controller.job_list:
+            status: successful
+            query:
+              playbook: "playbooks/ping.yml"
+            #aap_token: "{{ ansible_facts['aap_token']['token'] }}"
+            controller_host: "{{ tower_host | default('http://127.0.0.1') }}"
+            validate_certs: false
+
+        - name: Debug token
+          ansible.builtin.debug:
+            var: ansible_facts['aap_token']
+            verbosity: 3
