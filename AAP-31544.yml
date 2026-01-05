@@ -16,23 +16,23 @@
         validate_certs: false
 
     - name: Call Automation Controller API
-      when: ansible_facts['aap_token'] is defined and
-            ansible_facts['aap_token']['token'] is defined
+      when: ansible_facts['controller_token'] is defined and
+            ansible_facts['controller_token']['token'] is defined
       block:
         - name: List running jobs
           register: testing_jobs
           ignore_errors: true
           environment:
-            CONTROLLER_OAUTH_TOKEN: "{{ ansible_facts['aap_token']['token'] }}"
+            CONTROLLER_OAUTH_TOKEN: "{{ ansible_facts['controller_token']['token'] }}"
           ansible.controller.job_list:
             status: successful
             query:
-              playbook: "playbooks/ping.yml"
+              playbook: "hello_world.yml"
             #aap_token: "{{ ansible_facts['aap_token']['token'] }}"
             controller_host: "{{ tower_host | default('http://127.0.0.1') }}"
             validate_certs: false
 
         - name: Debug token
           ansible.builtin.debug:
-            var: ansible_facts['aap_token']
+            var: ansible_facts['controller_token']
             verbosity: 3
