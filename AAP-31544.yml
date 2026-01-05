@@ -6,7 +6,7 @@
 
   tasks:
     - name: Create a new token using username/password
-      ansible.platform.token:
+      ansible.controller.token:
         description: Temp token
         scope: write
         state: present
