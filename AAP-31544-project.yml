@@ -1,0 +1,62 @@
+---
+
+- name: Testing playbook for create token
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Create a new token using username/password
+      ansible.controller.token:
+        description: Temp token
+        scope: write
+        state: present
+        controller_username: "{{ api_username }}"
+        controller_password: "{{ api_password }}"
+        controller_host: "{{ tower_host | default('http://127.0.0.1') }}"
+        validate_certs: false
+
+    - name: List running jobs for the 1234.yml playbook
+      ansible.controller.job_list:
+        status: running
+        query: {"playbook": "1234.yml"}
+        controller_oauthtoken: "{{ controller_token }}"
+        controller_host: "{{ tower_host | default('http://127.0.0.1') }}"
+        validate_certs: false
+      register: testing_jobs
+
+    - name: Create project using token
+      ansible.controller.project:
+        name: project 1
+        description: 1st project
+        organization: Default
+        scm_type: git
+        scm_url: https://github.com/example/repo.git
+        scm_branch: main
+        scm_update_on_launch: true
+        scm_clean: true
+        state: present
+        controller_oauthtoken: "{{ controller_token }}"
+        controller_host: "{{ tower_host | default('http://localhost') }}"
+        validate_certs: false
+
+    - name: Call Automation Controller API
+      when: ansible_facts['controller_token'] is defined and
+            ansible_facts['controller_token']['token'] is defined
+      block:
+        - name: List running jobs
+          register: testing_jobs
+          ignore_errors: true
+          environment:
+            CONTROLLER_OAUTH_TOKEN: "{{ ansible_facts['controller_token']['token'] }}"
+          ansible.controller.job_list:
+            status: successful
+            query:
+              playbook: "AAP-31544.yml"
+            #aap_token: "{{ ansible_facts['aap_token']['token'] }}"
+            controller_host: "{{ tower_host | default('http://127.0.0.1') }}"
+            validate_certs: false
+
+        - name: Debug token
+          ansible.builtin.debug:
+            var: ansible_facts['controller_token']
+            verbosity: 3
