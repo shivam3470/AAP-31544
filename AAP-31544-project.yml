@@ -30,7 +30,7 @@
         description: 1st project
         organization: Default
         scm_type: git
-        scm_url: https://github.com/example/repo.git
+        scm_url: https://github.com/shivam3470/AAP-31544.git
         scm_branch: main
         scm_update_on_launch: true
         scm_clean: true
